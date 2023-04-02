@@ -9,10 +9,10 @@ def get_download(gid):
         return aria2.get_download(gid)
     except Exception as e:
         LOGGER.error(f'{e}: Aria2c, Error while getting torrent info')
-        return get_download(gid)
+        return None
 
 
-class AriaDownloadStatus:
+class Aria2Status:
 
     def __init__(self, gid, listener, seeding=False):
         self.__gid = gid
@@ -32,17 +32,12 @@ class AriaDownloadStatus:
             self.__download = get_download(self.__gid)
 
     def progress(self):
-        """
-        Calculates the progress of the mirror (upload or download)
-        :return: returns progress in percentage
-        """
         return self.__download.progress_string()
 
     def processed_bytes(self):
         return self.__download.completed_length_string()
 
     def speed(self):
-        self.__update()
         return self.__download.download_speed_string()
 
     def name(self):
@@ -56,12 +51,14 @@ class AriaDownloadStatus:
 
     def status(self):
         self.__update()
-        download = self.__download
-        if download.is_waiting:
-            return MirrorStatus.STATUS_QUEUEDL
-        elif download.is_paused:
+        if self.__download.is_waiting:
+            if self.seeding:
+                return MirrorStatus.STATUS_QUEUEUP
+            else:
+                return MirrorStatus.STATUS_QUEUEDL
+        elif self.__download.is_paused:
             return MirrorStatus.STATUS_PAUSED
-        elif download.seeder and self.seeding:
+        elif self.__download.seeder and self.seeding:
             return MirrorStatus.STATUS_SEEDING
         else:
             return MirrorStatus.STATUS_DOWNLOADING
@@ -96,6 +93,7 @@ class AriaDownloadStatus:
         return self.__gid
 
     async def cancel_download(self):
+        self.__update()
         await sync_to_async(self.__update)
         if self.__download.seeder and self.seeding:
             LOGGER.info(f"Cancelling Seed: {self.name()}")

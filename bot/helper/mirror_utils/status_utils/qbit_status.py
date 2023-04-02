@@ -1,43 +1,38 @@
 #!/usr/bin/env python3
 from asyncio import sleep
 
-from bot import LOGGER, get_client
+from bot import LOGGER, get_client, QbTorrents, qb_listener_lock
 from bot.helper.ext_utils.bot_utils import MirrorStatus, get_readable_file_size, get_readable_time, sync_to_async
 
-def get_download(client, hash_):
+def get_download(client, tag):
     try:
-        return client.torrents_info(torrent_hashes=hash_)[0]
+        return client.torrents_info(tag=tag)[0]
     except Exception as e:
-        LOGGER.error(f'{e}: Qbittorrent, Error while getting torrent info')
-        client = get_client()
-        return get_download(client, hash_)
+        LOGGER.error(f'{e}: Qbittorrent, while getting torrent info. Tag: {tag}')
+        return None
 
 
-class QbDownloadStatus:
+class QbittorrentStatus:
 
-    def __init__(self, listener, hash_, seeding=False):
+    def __init__(self, listener, seeding=False):
         self.__client = get_client()
         self.__listener = listener
-        self.__hash = hash_
-        self.__info = get_download(self.__client, hash_)
+        self.__info = get_download(self.__client, f'{self.__listener.uid}')
         self.seeding = seeding
         self.message = listener.message
 
     def __update(self):
-        self.__info = get_download(self.__client, self.__hash)
+        new_info = get_download(self.__client, f'{self.__listener.uid}')
+        if new_info is not None:
+            self.__info = new_info
 
     def progress(self):
-        """
-        Calculates the progress of the mirror (upload or download)
-        :return: returns progress in percentage
-        """
         return f'{round(self.__info.progress*100, 2)}%'
 
     def processed_bytes(self):
         return get_readable_file_size(self.__info.downloaded)
 
     def speed(self):
-        self.__update()
         return f"{get_readable_file_size(self.__info.dlspeed)}/s"
 
     def name(self):
@@ -54,14 +49,16 @@ class QbDownloadStatus:
 
     def status(self):
         self.__update()
-        download = self.__info.state
-        if download in ["queuedDL", "queuedUP"]:
+        state = self.__info.state
+        if state == "queuedDL":
             return MirrorStatus.STATUS_QUEUEDL
-        elif download in ["pausedDL", "pausedUP"]:
+        elif state == "queuedUP":
+            return MirrorStatus.STATUS_QUEUEUP
+        elif state in ["pausedDL", "pausedUP"]:
             return MirrorStatus.STATUS_PAUSED
-        elif download in ["checkingUP", "checkingDL"]:
+        elif state in ["checkingUP", "checkingDL"]:
             return MirrorStatus.STATUS_CHECKING
-        elif download in ["stalledUP", "uploading"] and self.seeding:
+        elif state in ["stalledUP", "uploading"] and self.seeding:
             return MirrorStatus.STATUS_SEEDING
         else:
             return MirrorStatus.STATUS_DOWNLOADING
@@ -76,7 +73,6 @@ class QbDownloadStatus:
         return f"{get_readable_file_size(self.__info.uploaded)}"
 
     def upload_speed(self):
-        self.__update()
         return f"{get_readable_file_size(self.__info.upspeed)}/s"
 
     def ratio(self):
@@ -89,10 +85,11 @@ class QbDownloadStatus:
         return self
 
     def gid(self):
-        return self.__hash[:12]
+        return self.hash()[:12]
 
     def hash(self):
-        return self.__hash
+        self.__update()
+        return self.__info.hash
 
     def client(self):
         return self.__client
@@ -101,11 +98,15 @@ class QbDownloadStatus:
         return self.__listener
 
     async def cancel_download(self):
-        await sync_to_async(self.__client.torrents_pause, torrent_hashes=self.__hash)
+        self.__update()
+        await sync_to_async(self.__client.torrents_pause, torrent_hashes=self.__info.hash)
         if self.status() != MirrorStatus.STATUS_SEEDING:
             LOGGER.info(f"Cancelling Download: {self.__info.name}")
             await sleep(0.3)
             await self.__listener.onDownloadError('Download stopped by user!')
-            await sync_to_async(self.__client.torrents_delete, torrent_hashes=self.__hash, delete_files=True)
+            await sync_to_async(self.__client.torrents_delete, torrent_hashes=self.__info.hash, delete_files=True)
             await sync_to_async(self.__client.torrents_delete_tags, tags=self.__info.tags)
             await sync_to_async(self.__client.auth_log_out)
+            async with qb_listener_lock:
+                if self.__info.tags in QbTorrents:
+                    del QbTorrents[self.__info.tags]

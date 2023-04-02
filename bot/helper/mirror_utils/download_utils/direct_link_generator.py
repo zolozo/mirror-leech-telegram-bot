@@ -18,7 +18,7 @@ from time import sleep
 from urllib.parse import quote, unquote, urlparse
 from uuid import uuid4
 from bs4 import BeautifulSoup
-from cfscrape import create_scraper
+from cloudscraper import create_scraper
 from lk21 import Bypass
 from lxml import etree
 
@@ -468,7 +468,7 @@ def filepress(url):
             'id': raw.path.split('/')[-1],
             'method': 'publicDownlaod',
             }
-        api = f'{raw.scheme}://api.{raw.hostname}/api/file/downlaod/'
+        api = f'{raw.scheme}://{raw.hostname}/api/file/downlaod/'
         res = cget('POST', api, headers={'Referer': f'{raw.scheme}://{raw.hostname}'}, json=json_data).json()
     except Exception as e:
         raise DirectDownloadLinkException(f'ERROR: {e.__class__.__name__}')

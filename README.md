@@ -77,6 +77,8 @@ In each single file there is a major change from base code, it's almost totaly d
 - Download and Upload using rclone
 - Ability to choose config, remote and path from list with buttons
 - Ability to set rclone flags
+- Rclone.conf for each user
+- Rclone serve for combine remote to use it as index from all remotes
 ### Overall
 - Docker image support for linux `amd64, arm64/v8, arm/v7`
 - Switch from sync to async
@@ -164,67 +166,85 @@ Fill up rest of the fields. Meaning of each field is discussed below. **NOTE**: 
 
 **2. Optional Fields**
 
-- `GDRIVE_ID`: This is the Folder/TeamDrive ID of the Google Drive Folder or `root` to which you want to upload all the mirrors using gdrive tools. `Str`
-- `RCLONE_PATH`: Default rclone path to which you want to upload all the mirrors using rclone. `Str`
-- `DEFAULT_UPLOAD`: Whether `rc` to upload to `RCLONE_PATH` or `gd` to upload to `GDRIVE_ID`. Default is `gd`. `Str`
-- `RCLONE_FLAGS`: key:value|key|key|key:value . Check here all [RcloneFlags](https://rclone.org/flags/). `Str`
-- `IS_TEAM_DRIVE`: Set `True` if uploading to TeamDrive using gdrive tools. Default is `False`. `Bool`
-- `DOWNLOAD_DIR`: The path to the local folder where the downloads should be downloaded to. `Str`
-- `STATUS_UPDATE_INTERVAL`: Time in seconds after which the progress/status message will be updated. Recommended `10` seconds at least. `Int`
-- `AUTO_DELETE_MESSAGE_DURATION`: Interval of time (in seconds), after which the bot deletes it's message and command message which is expected to be viewed instantly. **NOTE**: Set to `-1` to disable auto message deletion. `Int`
+- `USER_SESSION_STRING`: To download/upload from your telegram account and to send rss. To generate session string use this command `python3 generate_string_session.py` after mounting repo folder for sure. `Str`. **NOTE**: You can't use bot with private message. Use it with superGroup.
 - `DATABASE_URL`: Your Mongo Database URL (Connection string). Follow this [Generate Database](https://github.com/anasty17/mirror-leech-telegram-bot/tree/master#generate-database) to generate database. Data will be saved in Database: auth and sudo users, users settings including thumbnails for each user, rss data and incomplete tasks. **NOTE**: You can always edit all settings that saved in database from the official site -> (Browse collections). `Str`
+- `DOWNLOAD_DIR`: The path to the local folder where the downloads should be downloaded to. `Str`
+- `CMD_SUFFIX`: commands index number. This number will added at the end all commands. `Str`|`Int`
 - `AUTHORIZED_CHATS`: Fill user_id and chat_id of groups/users you want to authorize. Separate them by space. `Int`
 - `SUDO_USERS`: Fill user_id of users whom you want to give sudo permission. Separate them by space. `Int`
-- `USE_SERVICE_ACCOUNTS`: Whether to use Service Accounts or not with gdrive tools. For this to work see [Using Service Accounts](https://github.com/anasty17/mirror-leech-telegram-bot#generate-service-accounts-what-is-service-account) section below. Default is `False`. `Bool`
-- `INDEX_URL`: Refer to https://gitlab.com/ParveenBhadooOfficial/Google-Drive-Index. `Str`
+- `DEFAULT_UPLOAD`: Whether `rc` to upload to `RCLONE_PATH` or `gd` to upload to `GDRIVE_ID`. Default is `gd`. Read More [HERE](https://github.com/anasty17/mirror-leech-telegram-bot/tree/master#upload).`Str`
+- `STATUS_UPDATE_INTERVAL`: Time in seconds after which the progress/status message will be updated. Recommended `10` seconds at least. `Int`
+- `AUTO_DELETE_MESSAGE_DURATION`: Interval of time (in seconds), after which the bot deletes it's message and command message which is expected to be viewed instantly. **NOTE**: Set to `-1` to disable auto message deletion. `Int`
 - `STATUS_LIMIT`: Limit the no. of tasks shown in status message with buttons. Default is `10`. **NOTE**: Recommended limit is `4` tasks. `Int`
-- `STOP_DUPLICATE`: Bot will check file in Drive, if it is present in Drive, downloading or cloning will be stopped. (**NOTE**: File will be checked using filename not file hash, so this feature is not perfect yet). Default is `False`. `Bool`
-- `CMD_SUFFIX`: commands index number. This number will added at the end all commands. `Str`|`Int`
-- `TORRENT_TIMEOUT`: Timeout of dead torrents downloading with qBittorrent and Aria2c in seconds. `Int`
 - `EXTENSION_FILTER`: File extensions that won't upload/clone. Separate them by space. `Str`
 - `INCOMPLETE_TASK_NOTIFIER`: Get incomplete task messages after restart. Require database and superGroup. Default is `False`. `Bool`
 - `UPTOBOX_TOKEN`: Uptobox token to mirror uptobox links. Get it from [Uptobox Premium Account](https://uptobox.com/my_account). `str`
 - `YT_DLP_QUALITY`: Default yt-dlp quality. Check all possible formats [HERE](https://github.com/yt-dlp/yt-dlp#filtering-formats). `str`
 
+### GDrirve Tools
+
+- `GDRIVE_ID`: This is the Folder/TeamDrive ID of the Google Drive OR `root` to which you want to upload all the mirrors using google-api-python-client. `Str`
+- `IS_TEAM_DRIVE`: Set `True` if uploading to TeamDrive using google-api-python-client. Default is `False`. `Bool`
+- `USE_SERVICE_ACCOUNTS`: Whether to use Service Accounts or not, with google-api-python-client. For this to work see [Using Service Accounts](https://github.com/anasty17/mirror-leech-telegram-bot#generate-service-accounts-what-is-service-account) section below. Default is `False`. `Bool`
+- `INDEX_URL`: Refer to https://gitlab.com/ParveenBhadooOfficial/Google-Drive-Index. `Str`
+- `STOP_DUPLICATE`: Bot will check file/folder name in Drive incase uploading to `GDRIVE_ID`. If it's present in Drive then downloading or cloning will be stopped. (**NOTE**: Item will be checked using name and not hash, so this feature is not perfect yet). Default is `False`. `Bool`
+
+### Rclone
+
+- `RCLONE_PATH`: Default rclone path to which you want to upload all the mirrors using rclone. `Str`
+- `RCLONE_FLAGS`: key:value|key|key|key:value . Check here all [RcloneFlags](https://rclone.org/flags/). `Str`
+- `RCLONE_SERVE_URL`: Valid URL where the bot is deployed to use rclone serve. Format of URL should be `http://myip`, where `myip` is the IP/Domain(public) of your bot or if you have chosen port other than `80` so write it in this format `http://myip:port` (`http` and not `https`). `Str`
+- `RCLONE_SERVE_PORT`: Which is the **RCLONE_SERVE_URL** Port. Default is `8080`. `Int`
+- `RCLONE_SERVE_USER`: Username for rclone serve authentication. `Str`
+- `RCLONE_SERVE_PASS`: Password for rclone serve authentication. `Str`
+
 ### Update
+
 - `UPSTREAM_REPO`: Your github repository link, if your repo is private add `https://username:{githubtoken}@github.com/{username}/{reponame}` format. Get token from [Github settings](https://github.com/settings/tokens). So you can update your bot from filled repository on each restart. `Str`.
   - **NOTE**: Any change in docker or requirements you need to deploy/build again with updated repo to take effect. DON'T delete .gitignore file. For more information read [THIS](https://github.com/anasty17/mirror-leech-telegram-bot/tree/master#upstream-repo-recommended).
 - `UPSTREAM_BRANCH`: Upstream branch for update. Default is `master`. `Str`
 
 ### Leech
+
 - `LEECH_SPLIT_SIZE`: Size of split in bytes. Default is `2GB`. Default is `4GB` if your account is premium. `Int`
 - `AS_DOCUMENT`: Default type of Telegram file upload. Default is `False` mean as media. `Bool`
 - `EQUAL_SPLITS`: Split files larger than **LEECH_SPLIT_SIZE** into equal parts size (Not working with zip cmd). Default is `False`. `Bool`
 - `MEDIA_GROUP`: View Uploaded splitted file parts in media group. Default is `False`. `Bool`.
 - `LEECH_FILENAME_PREFIX`: Add custom word to leeched file name. `Str`
 - `DUMP_CHAT`: Chat ID. Upload files to specific chat. `str`. **NOTE**: Only available for superGroup/channel. Add `-100` before channel/superGroup id. In short don't add bot id or your id!
-- `USER_SESSION_STRING`: To download/upload from your telegram account. If you own premium account. To generate session string use this command `python3 generate_string_session.py` after mounting repo folder for sure. `Str`. **NOTE**: You can't use bot with private message. Use it with superGroup.
 
 ### qBittorrent/Aria2c
-- `BASE_URL`: Valid BASE URL where the bot is deployed to use qbittorrent web selection. Format of URL should be `http://myip`, where `myip` is the IP/Domain(public) of your bot or if you have chosen port other than `80` so write it in this format `http://myip:port` (`http` and not `https`). `Str`
-- `SERVER_PORT`: Only For VPS, which is the **BASE_URL_OF_BOT** Port. Default is `80`. `Int`
-- `WEB_PINCODE`: If empty or `False` means no more pincode required while torrent files web selection. `Bool`
-  - **Qbittorrent NOTE**: If your facing ram exceeded issue then set limit for `MaxConnecs`, decrease `AsyncIOThreadsCount` in qbittorrent config and set limit of `DiskWriteCacheSize` to `32`.
+
+- `TORRENT_TIMEOUT`: Timeout of dead torrents downloading with qBittorrent and Aria2c in seconds. `Int`
+- `BASE_URL`: Valid BASE URL where the bot is deployed to use torrent web files selection. Format of URL should be `http://myip`, where `myip` is the IP/Domain(public) of your bot or if you have chosen port other than `80` so write it in this format `http://myip:port` (`http` and not `https`). `Str`
+- `BASE_URL_PORT`: Which is the **BASE_URL** Port. Default is `80`. `Int`
+- `WEB_PINCODE`: If empty or `False` means no more pincode required before selecting torrent files from web. `Bool`
+  - **Qbittorrent NOTE**: If your facing ram issues then set limit for `MaxConnections`, decrease `AsyncIOThreadsCount`, set limit of `DiskWriteCacheSize` to `32` and decrease `MemoryWorkingSetLimit` from qbittorrent.conf or bsetting command.
 
 ### RSS
+
 - `RSS_DELAY`: Time in seconds for rss refresh interval. Recommended `900` second at least. Default is `900` in sec. `Int`
 - `RSS_CHAT_ID`: Chat ID where rss links will be sent. If you want message to be sent to the channel then add channel id. Add `-100` before channel id. `Int`
-  - **RSS NOTE**: `RSS_CHAT_ID` is required, otherwise monitor will not work. You must use `USER_STRING_SESSION` --OR-- bot should be added in both channel and group(linked to channel) so messages sent by the bot to channel will be forwarded to group without using `USER_STRING_SESSION`. If `DATABASE_URL` not added you will miss the feeds while bot offline.
+  - **RSS NOTES**: `RSS_CHAT_ID` is required, otherwise monitor will not work. You must use `USER_STRING_SESSION` --OR-- *CHANNEL*. If using channel then bot should be added in both channel and group(linked to channel) and `RSS_CHAT_ID` is the channel id, so messages sent by the bot to channel will be forwarded to group. Otherwise with `USER_STRING_SESSION` add group id for `RSS_CHAT_ID`. If `DATABASE_URL` not added you will miss the feeds while bot offline.
 
 ### MEGA
+
 - `MEGA_API_KEY`: Mega.nz API key to mirror mega.nz links. Get it from [Mega SDK Page](https://mega.nz/sdk). `Int`
 - `MEGA_EMAIL_ID`: E-Mail ID used to sign up on mega.nz for using premium account. `Str`
 - `MEGA_PASSWORD`: Password for mega.nz account. `Str`
 
 ### Queue System
+
 - `QUEUE_ALL`: Number of parallel tasks of downloads from (mega, telegram, yt-dlp, gdrive) + all uploads. For example if 20 task added and `QUEUE_ALL` is `8`, then the summation of uploading and downloading tasks are 8 and the rest in queue. `Int`. **NOTE**: if you want to fill `QUEUE_DOWNLOAD` or `QUEUE_UPLOAD`, then `QUEUE_ALL` value must be greater than or equal to the greatest one and less than or equal to summation of `QUEUE_UPLOAD` and `QUEUE_DOWNLOAD`.
 - `QUEUE_DOWNLOAD`: Number of parallel downloading tasks from mega, telegram, yt-dlp and gdrive. `Int`
 - `QUEUE_UPLOAD`: Number of all parallel uploading tasks. `Int`
 
 ### Buttons
+
 - `VIEW_LINK`: View Link button to open file Index Link in browser instead of direct download link, you can figure out if it's compatible with your Index code or not, open any video from you Index and check if its URL ends with `?a=view`. Compatible with [BhadooIndex](https://gitlab.com/ParveenBhadooOfficial/Google-Drive-Index) Code. Default is `False`. `Bool`
 
 ### Torrent Search
+
 - `SEARCH_API_LINK`: Search api app link. Get your api from deploying this [repository](https://github.com/Ryuk-me/Torrent-Api-py). `Str`
   - Supported Sites:
   >1337x, Piratebay, Nyaasi, Torlock, Torrent Galaxy, Zooqle, Kickass, Bitsearch, MagnetDL, Libgen, YTS, Limetorrent, TorrentFunk, Glodls, TorrentProject and YourBittorrent
@@ -277,7 +297,7 @@ sudo docker build . -t mltb
 ```
 - Run the image:
 ```
-sudo docker run -p 80:80 mltb
+sudo docker run -p 80:80 -p 8080:8080 mltb
 ```
 - To stop the running image:
 ```
@@ -291,8 +311,9 @@ sudo docker stop id
 
 #### Build And Run The Docker Image Using docker-compose
 
-**NOTE**: If you want to use port other than 80, change it in [docker-compose.yml](https://github.com/anasty17/mirror-leech-telegram-bot/blob/master/docker-compose.yml) also.
+**NOTE**: If you want to use ports other than 80 and 8080 for torrent file selection and rclone serve respectively, change it in [docker-compose.yml](https://github.com/anasty17/mirror-leech-telegram-bot/blob/master/docker-compose.yml) also.
 
+- Install docker-compose
 ```
 sudo apt install docker-compose
 ```
@@ -324,7 +345,7 @@ sudo docker-compose up
 #### Docker Notes
 
 **IMPORTANT NOTES**:
-1. You must set `SERVER_PORT` variable to any port you want to use. Default is `80`.
+1. Set `BASE_URL_PORT` and `RCLONE_SERVE_PORT` variables to any port you want to use. Default is `80` and `8080` respectively.
 2. You should stop the running image before deleting the container and you should delete the container before the image.
 3. To delete the container (this will not affect on the image):
 ```
@@ -347,25 +368,25 @@ mirror - or /m Mirror
 zipmirror - or /zm Mirror and upload as zip
 unzipmirror - or /uzm Mirror and extract files
 qbmirror - or /qm Mirror torrent using qBittorrent
-qbzipmirror - or /qzm Mirror torrent and upload as zip using qb
-qbunzipmirror - or /quzm Mirror torrent and extract files using qb
+qbzipmirror - or /qzm Mirror torrent using qb and upload as zip
+qbunzipmirror - or /quzm Mirror torrent using qb and extract files
 leech - or /l Leech
 zipleech - or /zl Leech and upload as zip
 unzipleech - or /uzl Leech and extract files
 qbleech - or /ql Leech torrent using qBittorrent
-qbzipleech - or /qzl Leech torrent and upload as zip using qb
-qbunzipleech - or /quzl Leech torrent and extract using qb
+qbzipleech - or /qzl Leech torrent using qb and upload as zip
+qbunzipleech - or /quzl Leech torrent using qb and extract
 clone - Copy file/folder to Drive
-count - Count file/folder of Drive
+count - Count file/folder from Drive
 ytdl - or /y Mirror yt-dlp supported link
 ytdlzip - or /yz Mirror yt-dlp supported link as zip
 ytdlleech - or /yl Leech through yt-dlp supported link
 ytdlzipleech - or /yzl Leech yt-dlp support link as zip
-usetting - users settings
-bsetting - bot settings
+usetting - User settings
+bsetting - Bot settings
 status - Get Mirror Status message
-btsel - select files from torrent
-rss - rss menu
+btsel - Select files from torrent
+rss - Rss menu
 list - Search files in Drive
 search - Search for torrents with API
 cancel - Cancel a task
@@ -378,6 +399,17 @@ stats - Bot Usage Stats
 ping - Ping the Bot
 help - All cmds with description
 ```
+
+------
+
+## Upload
+
+- `RCLONE_PATH` is like `GDRIVE_ID` a default path for mirror. In additional to those variables `DEFAULT_UPLOAD` to choose the default tool whether it's rclone or google-api-python-client.
+- If `DEFAULT_UPLOAD` = 'rc' then you must fill `RCLONE_PATH` with path as default one or with `rcl` to select destination path on each new task.
+- If `DEFAULT_UPLOAD` = 'gd' then you must fill `GDRIVE_ID` with folder/TD id.
+- If rclone.conf uploaded from usetting or added in `rclone/{user_id}.conf` then `RCLONE_PATH` must start with `mrcc:`.
+- Whenever you want to write path manually to use user rclone.conf that added from usetting then you must add the `mrcc:` at the beginning.
+
 ------
 
 ## UPSTREAM REPO (Recommended)
@@ -398,10 +430,12 @@ help - All cmds with description
 - Using `d` perfix alone will lead to use global options for aria2c or qbittorrent.
 
 ### Qbittorrent
+
 - Global options: `GlobalMaxRatio` and `GlobalMaxSeedingMinutes` in qbittorrent.conf, `-1` means no limit, but you can cancel manually.
   - **NOTE**: Don't change `MaxRatioAction`.
 
 ### Aria2c
+
 - Global options: `--seed-ratio` (0 means no limit) and `--seed-time` (0 means no seed) in aria.sh.
 
 ------
@@ -457,6 +491,7 @@ A folder named accounts will be created which will contain keys for the Service 
 Choose one of these methods
 
 ##### 1. Add Them To Google Group then to Team Drive (Recommended)
+
 - Mount accounts folder
 ```
 cd accounts
@@ -477,6 +512,7 @@ cd ..
 Then add emails from emails.txt to Google Group, after that add this Google Group to your Shared Drive and promote it to manager and delete email.txt file from accounts folder
 
 ##### 2. Add Them To Team Drive Directly
+
 - Run:
 ```
 python3 add_to_team_drive.py -d SharedTeamDriveSrcID
@@ -484,7 +520,7 @@ python3 add_to_team_drive.py -d SharedTeamDriveSrcID
 
 ------
 
-### Generate Database
+## Generate Database
 
 1. Go to `https://mongodb.com/` and sign-up.
 2. Create Shared Cluster.
@@ -510,6 +546,7 @@ TD2 0AO1JDB1t3i5jUk9PVA https://example.dev
 -----
 
 ## Yt-dlp and Aria2c Authentication Using .netrc File
+
 For using your premium accounts in yt-dlp or for protected Index Links, create .netrc file according to following format:
 
 **Note**: Create .netrc and not netrc, this file will be hidden, so view hidden files to edit it after creation.
@@ -540,13 +577,21 @@ Where host is the name of extractor (eg. instagram, Twitch). Multiple accounts o
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/anasty17)
 
-USDT Address: TEzjjfkxLKQqndpsdpkA7jgiX7QQCL5p4f
-Network: TRC20
-
-BTC Addrese:
+USDT Address:
+```
+TEzjjfkxLKQqndpsdpkA7jgiX7QQCL5p4f
+```
+Network:
+```
+TRC20
+```
+BTC Address:
+```
 17dkvxjqdc3yiaTs6dpjUB1TjV3tD7ScWe
-
+```
 ETH Address:
+```
 0xf798a8a1c72d593e16d8f3bb619ebd1a093c7309
+```
 
 -----
