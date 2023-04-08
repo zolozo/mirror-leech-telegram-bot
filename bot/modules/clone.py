@@ -104,7 +104,7 @@ async def cloneNode(client, message):
                     await delete_all_messages()
                 else:
                     await update_all_messages()
-            except IndexError:
+            except:
                 pass
         cc = f'\n\n<b>cc: </b>{tag}'
         if button in ["cancelled", ""]:
@@ -116,4 +116,5 @@ async def cloneNode(client, message):
         await sendMessage(message, "Send Gdrive link along with command or by replying to the link by command\n\n<b>Multi links only by replying to first link:</b>\n<code>/cmd</code> 10(number of links)")
 
 
-bot.add_handler(MessageHandler(cloneNode, filters=command(BotCommands.CloneCommand) & CustomFilters.authorized))
+bot.add_handler(MessageHandler(cloneNode, filters=command(
+    BotCommands.CloneCommand) & CustomFilters.authorized))

@@ -28,6 +28,7 @@ def __get_hash_file(path):
     return str(hash_)
 """
 
+
 async def add_qb_torrent(link, path, listener, ratio, seed_time):
     client = await sync_to_async(get_client)
     ADD_TIME = time()
@@ -38,7 +39,7 @@ async def add_qb_torrent(link, path, listener, ratio, seed_time):
             url = None
             tpath = link
         op = await sync_to_async(client.torrents_add, url, tpath, path, tags=f'{listener.uid}', ratio_limit=ratio,
-                                                seeding_time_limit=seed_time, headers={'user-agent': 'Wget/1.12'})
+                                 seeding_time_limit=seed_time, headers={'user-agent': 'Wget/1.12'})
         if op.lower() == "ok.":
             tor_info = await sync_to_async(client.torrents_info, tag=f'{listener.uid}')
             if len(tor_info) == 0:
@@ -59,7 +60,8 @@ async def add_qb_torrent(link, path, listener, ratio, seed_time):
             download_dict[listener.uid] = QbittorrentStatus(listener)
         await onDownloadStart(f'{listener.uid}')
         await listener.onDownloadStart()
-        LOGGER.info(f"QbitDownload started: {tor_info.name} - Hash: {ext_hash}")
+        LOGGER.info(
+            f"QbitDownload started: {tor_info.name} - Hash: {ext_hash}")
         if config_dict['BASE_URL'] and listener.select:
             if link.startswith('magnet:'):
                 metamsg = "Downloading Metadata, wait then you can select files. Use torrent file to avoid this wait."
@@ -71,13 +73,13 @@ async def add_qb_torrent(link, path, listener, ratio, seed_time):
                         return
                     try:
                         tor_info = tor_info[0]
-                        ext_hash = tor_info.hash
                         if tor_info.state not in ["metaDL", "checkingResumeData", "pausedDL"]:
                             await deleteMessage(meta)
                             break
                     except:
                         await deleteMessage(meta)
                         return
+            ext_hash = tor_info.hash
             await sync_to_async(client.torrents_pause, torrent_hashes=ext_hash)
             SBUTTONS = bt_selection_buttons(ext_hash)
             msg = "Your download paused. Choose files then press Done Selecting button to start downloading."
